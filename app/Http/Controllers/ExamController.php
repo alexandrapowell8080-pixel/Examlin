@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 
 class ExamController extends Controller
 {
- 
     public function category($exam_slug)
     {
         $exam = Exam::where('slug', $exam_slug)
@@ -29,10 +28,10 @@ class ExamController extends Controller
 
     public function quiz($exam_slug, $subject_slug, $test_slug, Request $request)
     {
-
         $exam = Exam::where('slug', $exam_slug)->where('is_active', true)->firstOrFail();
         $subject = $exam->subjects()->where('slug', $subject_slug)->firstOrFail();
         $test = $subject->tests()->where('slug', $test_slug)->where('is_active', true)->firstOrFail();
+        
         $questions = $test->questions()
             ->where('is_active', true)
             ->orderBy('order')
@@ -44,7 +43,6 @@ class ExamController extends Controller
 
         $currentOrder = $request->query('q', 1);
         $currentQuestion = $questions->firstWhere('order', $currentOrder) ?? $questions->first();
-
         $showRationale = $request->query('answered', false);
 
         $questionOrders = $questions->pluck('order')->toArray();
@@ -59,10 +57,28 @@ class ExamController extends Controller
             ->take(3)
             ->get();
 
-        session()->put("quiz_progress_{$test->id}", [
-            'current_order' => $currentQuestion->order,
-            'answered_count' => session("quiz_progress_{$test->id}.answered_count", 0) + ($showRationale ? 1 : 0),
-        ]);
+        $progress = session("quiz_progress_{$test->id}", []);
+        $answeredCount = $progress['answered_count'] ?? 0;
+        $correctCount = $progress['correct_count'] ?? 0;
+
+        if ($showRationale) {
+            $selectedChoice = $request->query('choice');
+            
+            // Fixed: Use array access instead of nullsafe operator
+            $choice = collect($currentQuestion->choices)->firstWhere('letter', $selectedChoice);
+            $isCorrect = $choice['is_correct'] ?? false;
+            
+            if ($isCorrect) {
+                $correctCount++;
+            }
+            $answeredCount++;
+            
+            session()->put("quiz_progress_{$test->id}", [
+                'current_order' => $currentQuestion->order,
+                'answered_count' => $answeredCount,
+                'correct_count' => $correctCount,
+            ]);
+        }
 
         return view('exam.question', compact(
             'exam',
@@ -74,7 +90,43 @@ class ExamController extends Controller
             'previousOrder',
             'nextOrder',
             'navExams',
-            'relatedExams'
+            'relatedExams',
+            'answeredCount',
+            'correctCount'
+        ));
+    }
+
+    public function results($exam_slug, $subject_slug, $test_slug)
+    {
+        $exam = Exam::where('slug', $exam_slug)->where('is_active', true)->firstOrFail();
+        $subject = $exam->subjects()->where('slug', $subject_slug)->firstOrFail();
+        $test = $subject->tests()->where('slug', $test_slug)->where('is_active', true)->firstOrFail();
+        
+        $progress = session("quiz_progress_{$test->id}", []);
+        $score = $progress['correct_count'] ?? 0;
+        $total = $test->question_count ?? 5;
+        $percentage = $total > 0 ? round(($score / $total) * 100) : 0;
+        
+        $highScore = session("high_score_{$test->id}", 0);
+        $newHighScore = false;
+        
+        if ($percentage > $highScore) {
+            $newHighScore = true;
+            session()->put("high_score_{$test->id}", $percentage);
+        }
+        
+        $navExams = Exam::where('is_active', true)->orderBy('order')->take(5)->get();
+        
+        return view('exam.results', compact(
+            'exam',
+            'subject',
+            'test',
+            'score',
+            'total',
+            'percentage',
+            'highScore',
+            'newHighScore',
+            'navExams'
         ));
     }
 }
