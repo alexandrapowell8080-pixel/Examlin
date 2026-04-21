@@ -1,10 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
+
 use App\Http\Controllers\ExamController;
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/course/{exam_slug}', [ExamController::class, 'category'])
     ->where('exam_slug', '[a-z0-9-]+')
