@@ -14,34 +14,34 @@
             <div>
                 <h4 class="footer-col-title">Graduate Exams</h4>
                 <div class="footer-links">
-                    <a href="/course/gmat" class="footer-link">GMAT®</a>
-                    <a href="/course/gre" class="footer-link">GRE®</a>
-                    <a href="/course/lsat" class="footer-link">LSAT®</a>
+                    <a href="/gmat" class="footer-link">GMAT®</a>
+                    <a href="/gre" class="footer-link">GRE®</a>
+                    <a href="/lsat" class="footer-link">LSAT®</a>
                 </div>
             </div>
 
             <div>
                 <h4 class="footer-col-title">Nursing Exams</h4>
                 <div class="footer-links">
-                    <a href="/course/teas" class="footer-link">TEAS®</a>
-                    <a href="/course/hesi" class="footer-link">HESI A2®</a>
-                    <a href="/course/nex" class="footer-link">NEX®</a>
+                    <a href="/teas" class="footer-link">TEAS®</a>
+                    <a href="/hesi" class="footer-link">HESI A2®</a>
+                    <a href="/nex" class="footer-link">NEX®</a>
                 </div>
             </div>
 
             <div>
                 <h4 class="footer-col-title">College Placement</h4>
                 <div class="footer-links">
-                    <a href="/course/accuplacer" class="footer-link">ACCUPLACER®</a>
-                    <a href="/course/tsia2" class="footer-link">TSIA2®</a>
+                    <a href="/accuplacer" class="footer-link">ACCUPLACER®</a>
+                    <a href="/tsia2" class="footer-link">TSIA2®</a>
                 </div>
             </div>
 
             <div>
                 <h4 class="footer-col-title">High School Equivalency</h4>
                 <div class="footer-links">
-                    <a href="/course/ged" class="footer-link">GED®</a>
-                    <a href="/course/hiset" class="footer-link">HiSET®</a>
+                    <a href="/ged" class="footer-link">GED®</a>
+                    <a href="/hiset" class="footer-link">HiSET®</a>
                 </div>
             </div>
 

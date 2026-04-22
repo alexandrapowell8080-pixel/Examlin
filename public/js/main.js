@@ -27,7 +27,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    // 2. Hero Widget Graphic Anim
+    
+    // 2. Hero Widget Graphic Animation with Hover Interaction
     function initWidgetAnimation() {
         const container = document.querySelector(".widget-graphic-container");
         const graphic = document.querySelector(".widget-graphic");
@@ -38,6 +39,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!container || !graphic || items.length === 0) return;
 
         let currentIndex = -1;
+        let animationInterval;
+        let isHovering = false;
 
         function highlightNextItem() {
             items.forEach((item) => item.classList.remove("item-active"));
@@ -64,9 +67,72 @@ document.addEventListener("DOMContentLoaded", function () {
             graphic.style.top = `${graphicTop}px`;
         }
 
-        setTimeout(highlightNextItem, 200);
+        function highlightItemAtIndex(index) {
+            items.forEach((item) => item.classList.remove("item-active"));
+            
+            currentIndex = index;
+            const targetItem = items[currentIndex];
+            
+            targetItem.classList.add("item-active");
+            
+            const itemLeft = targetItem.offsetLeft;
+            const itemTop = targetItem.offsetTop;
+            const itemWidth = targetItem.offsetWidth;
+            const itemHeight = targetItem.offsetHeight;
+            
+            const graphicLeft = itemLeft + itemWidth / 2 - 40;
+            const graphicTop = itemTop + itemHeight / 2 - 33;
+            
+            graphic.style.left = `${graphicLeft}px`;
+            graphic.style.top = `${graphicTop}px`;
+        }
 
-        setInterval(highlightNextItem, 900);
+        function startAnimation() {
+            if (!isHovering) {
+                highlightNextItem();
+                animationInterval = setInterval(highlightNextItem, 900);
+            }
+        }
+
+        function stopAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        // Mouse enter - stop animation and highlight hovered item
+        container.addEventListener("mouseenter", function () {
+            isHovering = true;
+            stopAnimation();
+        });
+
+        // Mouse leave - resume random animation
+        container.addEventListener("mouseleave", function () {
+            isHovering = false;
+            // Small delay before resuming to make it feel natural
+            setTimeout(() => {
+                if (!isHovering) {
+                    startAnimation();
+                }
+            }, 100);
+        });
+
+        // Mouse move over items - highlight the one being hovered
+        items.forEach((item, index) => {
+            item.addEventListener("mouseenter", function () {
+                if (isHovering) {
+                    highlightItemAtIndex(index);
+                }
+            });
+        });
+
+        // Start the initial animation
+        setTimeout(() => {
+            if (!isHovering) {
+                startAnimation();
+            }
+        }, 200);
     }
 
     initWidgetAnimation();

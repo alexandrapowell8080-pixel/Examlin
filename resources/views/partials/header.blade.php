@@ -18,20 +18,20 @@
                     <div class="dropdown-content">
                         <p class="mobile-category-title font-inter">All Courses</p>
                         <div class="course-grid-inner">
-                            <a href="/course/gmat" class="course-btn">GMAT®</a>
-                            <a href="/course/gre" class="course-btn">GRE®</a>
-                            <a href="/course/lsat" class="course-btn">LSAT®</a>
-                            <a href="/course/teas" class="course-btn">TEAS®</a>
-                            <a href="/course/hesi" class="course-btn">HESI A2®</a>
-                            <a href="/course/nex" class="course-btn">NEX®</a>
-                            <a href="/course/ged" class="course-btn">GED®</a>
-                            <a href="/course/hiset" class="course-btn">HiSET®</a>
-                            <a href="/course/accuplacer" class="course-btn">ACCUPLACER®</a>
-                            <a href="/course/tsia2" class="course-btn">TSIA2®</a>
+                            <a href="/gmat" class="course-btn">GMAT®</a>
+                            <a href="/gre" class="course-btn">GRE®</a>
+                            <a href="/lsat" class="course-btn">LSAT®</a>
+                            <a href="/teas" class="course-btn">TEAS®</a>
+                            <a href="/hesi" class="course-btn">HESI A2®</a>
+                            <a href="/nex" class="course-btn">NEX®</a>
+                            <a href="/ged" class="course-btn">GED®</a>
+                            <a href="/hiset" class="course-btn">HiSET®</a>
+                            <a href="/accuplacer" class="course-btn">ACCUPLACER®</a>
+                            <a href="/tsia2" class="course-btn">TSIA2®</a>
                         </div>
                     </div>
                 </div>
-                
+         
                 <a href="/about" class="nav-link">About</a>
             </div>
 
