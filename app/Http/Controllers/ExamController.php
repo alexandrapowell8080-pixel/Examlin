@@ -2,93 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Exam;
-use App\Models\Subject;
-use App\Models\Test;
-use App\Models\Question;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
 {
+   
     public function category($exam_slug)
     {
-        $exam = Exam::where('slug', $exam_slug)
-            ->where('is_active', true)
+        $category = Category::where('slug', $exam_slug)
+            ->with(['exams.examNames' => function($q) {
+                $q->orderBy('id'); 
+            }])
             ->firstOrFail();
         
-        $subjects = $exam->subjects()
-            ->with(['tests' => fn($q) => $q->where('is_active', true)->orderBy('order')])
-            ->orderBy('order')
-            ->get();
+        $navExams = Category::with('classification')->orderBy('id')->get();
         
-        $navExams = Exam::where('is_active', true)->orderBy('order')->get();
-        
-        return view('exam.category', compact('exam', 'subjects', 'navExams'));
+        return view('exam.category', compact('category', 'navExams'));
     }
 
     public function quiz($exam_slug, $subject_slug, $test_slug, Request $request)
     {
-        $exam = Exam::where('slug', $exam_slug)->where('is_active', true)->firstOrFail();
-        $subject = $exam->subjects()->where('slug', $subject_slug)->firstOrFail();
-        $test = $subject->tests()->where('slug', $test_slug)->where('is_active', true)->firstOrFail();
+        $category = Category::where('slug', $exam_slug)->firstOrFail();
+        $exam = $category->exams()->where('slug', $subject_slug)->firstOrFail();
+        $examName = $exam->examNames()->where('slug', $test_slug)->firstOrFail();
         
-        $questions = $test->questions()
-            ->where('is_active', true)
-            ->orderBy('order')
+        $questions = $examName->questions()
+            ->orderBy('id') 
             ->get();
 
         if ($questions->isEmpty()) {
             abort(404, 'No questions found for this test');
         }
 
-        $currentOrder = $request->query('q', 1);
-        $currentQuestion = $questions->firstWhere('order', $currentOrder) ?? $questions->first();
-        $showRationale = $request->query('answered', false);
+        $questionIds = $questions->pluck('id')->toArray();
+        
+        $currentQuestionId = session("quiz_current_question_{$examName->id}");
+        
+        if (!$currentQuestionId || !in_array($currentQuestionId, $questionIds)) {
+            $currentQuestionId = $questionIds[0];
+            session(["quiz_current_question_{$examName->id}" => $currentQuestionId]);
+        }
+        
+        $currentQuestion = $questions->firstWhere('id', $currentQuestionId);
+        
+        $currentIndex = array_search($currentQuestion->id, $questionIds);
+        $previousId = $questionIds[$currentIndex - 1] ?? null;
+        $nextId = $questionIds[$currentIndex + 1] ?? null;
 
-        $questionOrders = $questions->pluck('order')->toArray();
-        $currentIndex = array_search($currentQuestion->order, $questionOrders);
-        $previousOrder = $questionOrders[$currentIndex - 1] ?? null;
-        $nextOrder = $questionOrders[$currentIndex + 1] ?? null;
-
-        $navExams = Exam::where('is_active', true)->orderBy('order')->take(5)->get();
-        $relatedExams = Exam::where('id', '!=', $exam->id)
-            ->where('is_active', true)
+        $navExams = Category::orderBy('id')->take(5)->get();
+        $relatedExams = Category::where('id', '!=', $category->id)
             ->inRandomOrder()
             ->take(3)
             ->get();
 
-        $progress = session("quiz_progress_{$test->id}", []);
+        $progress = session("quiz_progress_{$examName->id}", []);
         $answeredCount = $progress['answered_count'] ?? 0;
         $correctCount = $progress['correct_count'] ?? 0;
 
-        if ($showRationale) {
-            $selectedChoice = $request->query('choice');
+        $selectedChoice = $request->query('choice');
+        $isAnswered = $request->query('answered', false) && $selectedChoice;
+        
+        if ($isAnswered) {
+            $isCorrect = ($selectedChoice === $currentQuestion->correctAnswer);
             
-            // Fixed: Use array access instead of nullsafe operator
-            $choice = collect($currentQuestion->choices)->firstWhere('letter', $selectedChoice);
-            $isCorrect = $choice['is_correct'] ?? false;
-            
-            if ($isCorrect) {
-                $correctCount++;
+            if (!session()->has("quiz_answered_{$examName->id}_{$currentQuestion->id}")) {
+                session()->put("quiz_answered_{$examName->id}_{$currentQuestion->id}", true);
+                $answeredCount++;
+                if ($isCorrect) {
+                    $correctCount++;
+                }
+                session()->put("quiz_progress_{$examName->id}", [
+                    'answered_count' => $answeredCount,
+                    'correct_count' => $correctCount,
+                ]);
             }
-            $answeredCount++;
-            
-            session()->put("quiz_progress_{$test->id}", [
-                'current_order' => $currentQuestion->order,
-                'answered_count' => $answeredCount,
-                'correct_count' => $correctCount,
-            ]);
         }
 
         return view('exam.question', compact(
+            'category',
             'exam',
-            'subject',
-            'test',
+            'examName',
             'questions',
             'currentQuestion',
-            'showRationale',
-            'previousOrder',
-            'nextOrder',
+            'isAnswered',
+            'selectedChoice',
+            'previousId',
+            'nextId',
             'navExams',
             'relatedExams',
             'answeredCount',
@@ -96,31 +96,63 @@ class ExamController extends Controller
         ));
     }
 
+    public function navigate(Request $request)
+    {
+        $examNameId = $request->input('exam_name_id');
+        $direction = $request->input('direction');
+        
+        $examName = \App\Models\ExamName::findOrFail($examNameId);
+        $questions = $examName->questions()->orderBy('id')->pluck('id')->toArray();
+        
+        $currentId = session("quiz_current_question_{$examNameId}");
+        $currentIndex = array_search($currentId, $questions);
+        
+        if ($direction === 'next' && isset($questions[$currentIndex + 1])) {
+            $newId = $questions[$currentIndex + 1];
+        } elseif ($direction === 'previous' && isset($questions[$currentIndex - 1])) {
+            $newId = $questions[$currentIndex - 1];
+        } else {
+            return redirect()->route('quiz.results', [
+                'exam_slug' => $examName->exam->category->slug,
+                'subject_slug' => $examName->exam->slug,
+                'test_slug' => $examName->slug,
+            ]);
+        }
+        
+        session(["quiz_current_question_{$examNameId}" => $newId]);
+        
+        return redirect()->route('quiz.show', [
+            'exam_slug' => $examName->exam->category->slug,
+            'subject_slug' => $examName->exam->slug,
+            'test_slug' => $examName->slug,
+        ]);
+    }
+
     public function results($exam_slug, $subject_slug, $test_slug)
     {
-        $exam = Exam::where('slug', $exam_slug)->where('is_active', true)->firstOrFail();
-        $subject = $exam->subjects()->where('slug', $subject_slug)->firstOrFail();
-        $test = $subject->tests()->where('slug', $test_slug)->where('is_active', true)->firstOrFail();
+        $category = Category::where('slug', $exam_slug)->firstOrFail();
+        $exam = $category->exams()->where('slug', $subject_slug)->firstOrFail();
+        $examName = $exam->examNames()->where('slug', $test_slug)->firstOrFail();
         
-        $progress = session("quiz_progress_{$test->id}", []);
+        $progress = session("quiz_progress_{$examName->id}", []);
         $score = $progress['correct_count'] ?? 0;
-        $total = $test->question_count ?? 5;
+        $total = $examName->questions()->count();
         $percentage = $total > 0 ? round(($score / $total) * 100) : 0;
         
-        $highScore = session("high_score_{$test->id}", 0);
+        $highScore = session("high_score_{$examName->id}", 0);
         $newHighScore = false;
         
         if ($percentage > $highScore) {
             $newHighScore = true;
-            session()->put("high_score_{$test->id}", $percentage);
+            session()->put("high_score_{$examName->id}", $percentage);
         }
         
-        $navExams = Exam::where('is_active', true)->orderBy('order')->take(5)->get();
+        $navExams = Category::orderBy('id')->take(5)->get();
         
         return view('exam.results', compact(
+            'category',
             'exam',
-            'subject',
-            'test',
+            'examName',
             'score',
             'total',
             'percentage',

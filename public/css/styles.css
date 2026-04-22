@@ -65,7 +65,7 @@ img {
     padding-bottom: 40px;
 }
 .py-lg {
-    padding-top: 80px;
+    padding-top: 10px;
     padding-bottom: 80px;
 }
 .mb-md {
@@ -184,8 +184,9 @@ img {
 }
 .hero-content {
     position: relative;
-    z-index: 10;
+    z-index: 2;
     width: 100%;
+    margin-top: -1%;
 }
 .hero-grid {
     display: grid;
@@ -527,7 +528,7 @@ img {
 }
 @media (min-width: 640px) {
     .course-grid-4 {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
 }
 @media (min-width: 1024px) {
@@ -538,6 +539,11 @@ img {
 @media (min-width: 1280px) {
     .course-grid-4 {
         grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (min-width: 1536px) {
+    .course-grid-4 {
+        grid-template-columns: repeat(5, 1fr);
     }
 }
 
