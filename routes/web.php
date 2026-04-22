@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\ExamController;
 
 
@@ -25,6 +24,14 @@ Route::get('/quiz/{exam_slug}/{subject_slug}/{test_slug}/results', [ExamControll
     ])
     ->name('quiz.results');
 
+
+Route::get('/', function () {
+    return view('index');
+});
+
+Route::fallback(function () {
+    return response()->view('errors.404', [], 404);
+});
 Route::get('/health', function () {
     return response()->json([
         'status' => 'ok',
@@ -32,8 +39,4 @@ Route::get('/health', function () {
         'app' => config('app.name'),
         'env' => config('app.env'),
     ]);
-});
-
-Route::fallback(function () {
-    return response()->view('errors.404', [], 404);
 });
