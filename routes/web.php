@@ -7,6 +7,11 @@ Route::get('/', function () {
     return view('index');
 });
 
+Route::get('/about', function () {
+    return view('about');
+});
+
+
 Route::get('/{exam_slug}', [ExamController::class, 'category'])
     ->where('exam_slug', '[a-z0-9-]+')
     ->name('exam.category');
