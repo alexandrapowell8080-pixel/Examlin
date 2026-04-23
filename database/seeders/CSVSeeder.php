@@ -16,7 +16,7 @@ class CSVSeeder extends Seeder
     protected $examNameCache = [];
     
     protected $questionsBatch = [];
-    protected $batchSize = 500;
+    protected $batchSize = 2500; // Increased for faster bulk inserts
 
     public function __construct()
     {
@@ -93,6 +93,12 @@ class CSVSeeder extends Seeder
                 if ($value === '') {
                     return null;
                 }
+                
+                // Speed Optimization: Bypass heavy detection if already valid UTF-8
+                if (mb_check_encoding($value, 'UTF-8')) {
+                    return $value;
+                }
+                
                 $encoding = mb_detect_encoding($value, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
                 return mb_convert_encoding($value, 'UTF-8', $encoding);
             }, $row);
