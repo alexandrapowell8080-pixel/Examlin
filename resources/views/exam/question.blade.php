@@ -66,8 +66,7 @@
 <body>
      @include('partials.header')
     
-    <div class="exam-timer" id="exam-timer" aria-live="polite">45:00</div>
-
+    
     <main class="question-page">
         <div class="container">
             <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -93,23 +92,24 @@
                     <div class="grid lg:grid-cols-5 gap-6">
                         
                         <div class="lg:col-span-3">
-                            <div class="bg-card border border-border rounded-2xl p-6 md:p-8">
-                                <!-- ✅ UPDATED PROGRESS BAR SECTION -->
+                         
                                 <div class="mb-6">
-                                    <!-- Progress bar strip -->
+
                                     <div style="width: 100%; height: 10px; background: #e6e6e2; border-radius: 9999px; overflow: hidden;">
                                         <div 
                                             id="progress-bar-fill"
                                             style="height: 100%; border-radius: 9999px; width: 0%; background: linear-gradient(90deg, var(--magenta) 0%, var(--magenta-light) 100%); transition: width 0.5s ease-out;"
                                         ></div>
                                     </div>
-                                    <!-- Question counter text -->
+
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px;">
                                         <span style="font-weight: 500; color: var(--gray);">Question {{ $questionNumber }}</span>
                                         <span class="text-muted-foreground">of {{ $questions->count() }}</span>
                                     </div>
                                 </div>
-                                <!-- ✅ END UPDATED SECTION -->
+ 
+                            <div class="bg-card border border-border rounded-2xl p-6 md:p-8">
+                                
                                 
                                 @if($currentQuestion->extract)
                                     <div class="question-extract mb-4 p-4 rounded-xl bg-offwhite border-l-4" style="border-left-color: var(--sage)">
@@ -216,33 +216,28 @@
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-center gap-2 mt-6 flex-wrap">
-                        @foreach($questions as $q)
-                            @php
-                                $qNumber = $questions->search(fn($item) => $item->id === $q->id) + 1;
-                                $isCurrent = $q->id == $currentQuestion->id;
-                                $isAnsweredQuestion = session()->has("quiz_answered_{$examName->id}_{$q->id}");
-                            @endphp
-                            <form method="POST" action="{{ route('quiz.navigate') }}" class="inline">
-                                @csrf
-                                <input type="hidden" name="exam_name_id" value="{{ $examName->id }}">
-                                <input type="hidden" name="question_id" value="{{ $q->id }}">
-                                <input type="hidden" name="direction" value="jump">
-                                <button type="submit"
-                                       class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold font-inter transition-all duration-150 {{ $isCurrent ? 'bg-primary text-primary-foreground' : ($isAnsweredQuestion ? 'bg-sage text-white' : 'bg-accent text-muted-foreground border border-border') }}"
-                                       aria-label="Question {{ $qNumber }}{{ $isAnsweredQuestion ? ' (answered)' : '' }}">
-                                    {{ $qNumber }}
-                                    @if($isAnsweredQuestion)
-                                        <span class="sr-only">- answered</span>
-                                    @endif
-                                </button>
-                            </form>
-                        @endforeach
-                    </div>
+                    
                     
                     <div class="mt-4 text-center text-xs text-muted-foreground" id="progress-text">
                         {{ $answeredCount ?? 0 }} of {{ $questions->count() }} answered · {{ $correctCount ?? 0 }} correct
                     </div>
+                    <!-- Highest Attempt Badge -->
+<div class="mt-6">
+    <div style="background: var(--offwhite); border: 1px solid #e6e6e2; border-radius: 0.75rem; padding: 1rem; text-align: center;">
+        <p style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray); margin-bottom: 0.5rem; font-family: var(--font);">
+            Highest Attempt
+        </p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span style="font-size: 1.5rem; font-weight: 800; color: var(--magenta); font-family: var(--font); line-height: 1;">87%</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sage)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <path d="m18 15-6-6-6 6"/>
+            </svg>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--gray); margin-top: 0.5rem; font-family: var(--font);">
+            Keep practicing to improve!
+        </p>
+    </div>
+</div>
                 </div>
                 
                 <div class="hidden lg:block">
@@ -406,17 +401,14 @@
             }, 1000);
         })();
 
-        // === ✅ PROGRESS BAR ANIMATION ===
         (function animateProgressBar() {
             const progressBar = document.getElementById('progress-bar-fill');
             if (!progressBar) return;
-            
-            // Blade renders these as plain numbers in JS (with fallbacks)
+
             const currentQuestion = {{ $questionNumber ?? 1 }};
             const totalQuestions = {{ $questions->count() ?? 1 }};
             const percentage = totalQuestions > 0 ? Math.min(100, (currentQuestion / totalQuestions) * 100) : 0;
-            
-            // Trigger animation after DOM is ready
+           
             requestAnimationFrame(() => {
                 progressBar.style.width = percentage + '%';
             });
