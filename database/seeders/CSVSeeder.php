@@ -16,11 +16,12 @@ class CSVSeeder extends Seeder
     protected $examNameCache = [];
     
     protected $questionsBatch = [];
-    protected $batchSize = 2500; // Increased for faster bulk inserts
+    
+    // Lowered to 500 to prevent 'MySQL server has gone away' max_allowed_packet errors
+    protected $batchSize = 500; 
 
     public function __construct()
     {
-      
         $this->directoryPath = database_path('seeders/Data');
     }
 
@@ -37,21 +38,10 @@ class CSVSeeder extends Seeder
         
         DB::disableQueryLog(); 
         
-        try {
-            foreach ($csvFiles as $filePath) {
-                $this->processFile($filePath);
-            }
-         
-            $this->insertQuestionsBatch();
-            
-            DB::commit();
-            
-            $this->command->info("✓ Import complete for all files.");
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->command->error("Import failed entirely: " . $e->getMessage());
-            throw $e;
+        // Notice: Global transaction removed here to prevent timeouts
+        
+        foreach ($csvFiles as $filePath) {
+            $this->processFile($filePath);
         }
         
         $this->command->info("✓ Import completely finished for all files.");
@@ -61,17 +51,8 @@ class CSVSeeder extends Seeder
     {
         $this->command->info("Processing: " . basename($filePath));
         
-        $headers = fgetcsv($handle);
-        if (!$headers) {
-            throw new \Exception("Failed to read CSV headers in " . basename($filePath));
-        }
-        
-        $headers[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $headers[0]);
-        $headers = array_map('trim', $headers);
-        
-        $rowCount = 0;
-        $importedCount = 0;
-        $skippedCount = 0;
+        // Start transaction PER FILE to keep connection fresh and stable
+        DB::beginTransaction();
         
         try {
             $handle = fopen($filePath, 'r');
@@ -95,20 +76,9 @@ class CSVSeeder extends Seeder
                     continue; 
                 }
 
-            $cleanRow = array_map(function ($value) {
-                $value = trim((string) $value);
-                if ($value === '') {
-                    return null;
+                if (count($headers) !== count($row)) {
+                    $row = array_pad($row, count($headers), null);
                 }
-                
-                // Speed Optimization: Bypass heavy detection if already valid UTF-8
-                if (mb_check_encoding($value, 'UTF-8')) {
-                    return $value;
-                }
-                
-                $encoding = mb_detect_encoding($value, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
-                return mb_convert_encoding($value, 'UTF-8', $encoding);
-            }, $row);
 
                 $cleanRow = array_map(function ($value) {
                     $value = trim((string) $value);
