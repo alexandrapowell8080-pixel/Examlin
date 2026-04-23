@@ -83,7 +83,7 @@
             </nav>
 
             <div class="question-page__header">
-                <h1 class="question-page__title">{{ $category->name }} {{ $exam->name }} {{ $examName->name }}</h1>
+                <h1 class="question-page__title"> ®{{ $examName->name }}</h1>
                 <p class="question-page__meta">{{ $questions->count() }} questions · Free Practice</p>
             </div>
 
@@ -94,10 +94,22 @@
                         
                         <div class="lg:col-span-3">
                             <div class="bg-card border border-border rounded-2xl p-6 md:p-8">
-                                <div class="flex items-center gap-2 mb-6">
-                                    <span class="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md font-inter">Question {{ $questionNumber }}</span>
-                                    <span class="text-xs text-muted-foreground">of {{ $questions->count() }}</span>
+                                <!-- ✅ UPDATED PROGRESS BAR SECTION -->
+                                <div class="mb-6">
+                                    <!-- Progress bar strip -->
+                                    <div style="width: 100%; height: 10px; background: #e6e6e2; border-radius: 9999px; overflow: hidden;">
+                                        <div 
+                                            id="progress-bar-fill"
+                                            style="height: 100%; border-radius: 9999px; width: 0%; background: linear-gradient(90deg, var(--magenta) 0%, var(--magenta-light) 100%); transition: width 0.5s ease-out;"
+                                        ></div>
+                                    </div>
+                                    <!-- Question counter text -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px;">
+                                        <span style="font-weight: 500; color: var(--gray);">Question {{ $questionNumber }}</span>
+                                        <span class="text-muted-foreground">of {{ $questions->count() }}</span>
+                                    </div>
                                 </div>
+                                <!-- ✅ END UPDATED SECTION -->
                                 
                                 @if($currentQuestion->extract)
                                     <div class="question-extract mb-4 p-4 rounded-xl bg-offwhite border-l-4" style="border-left-color: var(--sage)">
@@ -392,6 +404,22 @@
                 timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                 timeLeft--;
             }, 1000);
+        })();
+
+        // === ✅ PROGRESS BAR ANIMATION ===
+        (function animateProgressBar() {
+            const progressBar = document.getElementById('progress-bar-fill');
+            if (!progressBar) return;
+            
+            // Blade renders these as plain numbers in JS (with fallbacks)
+            const currentQuestion = {{ $questionNumber ?? 1 }};
+            const totalQuestions = {{ $questions->count() ?? 1 }};
+            const percentage = totalQuestions > 0 ? Math.min(100, (currentQuestion / totalQuestions) * 100) : 0;
+            
+            // Trigger animation after DOM is ready
+            requestAnimationFrame(() => {
+                progressBar.style.width = percentage + '%';
+            });
         })();
     </script>
 </body>

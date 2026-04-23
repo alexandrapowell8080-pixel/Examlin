@@ -20,13 +20,12 @@ class CSVSeeder extends Seeder
 
     public function __construct()
     {
-        // Target the directory instead of a single file
+      
         $this->directoryPath = database_path('seeders/Data');
     }
 
     public function run(): void
     {
-        // Retrieve all CSV files in the directory
         $csvFiles = glob($this->directoryPath . '/*.csv');
 
         if (empty($csvFiles)) {
@@ -43,8 +42,7 @@ class CSVSeeder extends Seeder
             foreach ($csvFiles as $filePath) {
                 $this->processFile($filePath);
             }
-            
-            // Insert any remaining items in the batch after all files are processed
+         
             $this->insertQuestionsBatch();
             
             DB::commit();
@@ -68,7 +66,6 @@ class CSVSeeder extends Seeder
             throw new \Exception("Failed to read CSV headers in " . basename($filePath));
         }
         
-        // Strip BOM from the first header if it exists
         $headers[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $headers[0]);
         $headers = array_map('trim', $headers);
         
@@ -87,7 +84,6 @@ class CSVSeeder extends Seeder
                 $row = array_pad($row, count($headers), null);
             }
 
-            // Sanitize all row data to prevent MySQL 1366 encoding errors
             $cleanRow = array_map(function ($value) {
                 $value = trim((string) $value);
                 if ($value === '') {
