@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class CSVSeeder extends Seeder
 {
-    protected $filePath;
+    protected $directoryPath;
     
     protected $classificationCache = [];
     protected $categoryCache = [];
@@ -20,88 +20,103 @@ class CSVSeeder extends Seeder
 
     public function __construct()
     {
-        $this->filePath = database_path('seeders/Data/examlin.csv');
+        // Target the directory instead of a single file
+        $this->directoryPath = database_path('seeders/Data');
     }
 
     public function run(): void
     {
-        if (!file_exists($this->filePath)) {
-            $this->command->error("CSV file not found: {$this->filePath}");
+        // Retrieve all CSV files in the directory
+        $csvFiles = glob($this->directoryPath . '/*.csv');
+
+        if (empty($csvFiles)) {
+            $this->command->error("No CSV files found in: {$this->directoryPath}");
             return;
         }
 
-        $this->command->info("Starting highly efficient CSV import from: {$this->filePath}");
+        $this->command->info("Starting highly efficient CSV import for " . count($csvFiles) . " file(s).");
         
         DB::disableQueryLog(); 
         DB::beginTransaction();
         
         try {
-            $handle = fopen($this->filePath, 'r');
-            
-            $headers = fgetcsv($handle);
-            if (!$headers) {
-                throw new \Exception("Failed to read CSV headers");
+            foreach ($csvFiles as $filePath) {
+                $this->processFile($filePath);
             }
             
-            // Strip BOM from the first header if it exists
-            $headers[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $headers[0]);
-            $headers = array_map('trim', $headers);
-            
-            $rowCount = 0;
-            $importedCount = 0;
-            $skippedCount = 0;
-            
-            while (($row = fgetcsv($handle)) !== false) {
-                $rowCount++;
-                
-                if (empty(array_filter($row))) {
-                    continue; 
-                }
-
-                if (count($headers) !== count($row)) {
-                    $row = array_pad($row, count($headers), null);
-                }
-
-                // Sanitize all row data to prevent MySQL 1366 encoding errors
-                $cleanRow = array_map(function ($value) {
-                    $value = trim((string) $value);
-                    if ($value === '') {
-                        return null;
-                    }
-                    $encoding = mb_detect_encoding($value, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
-                    return mb_convert_encoding($value, 'UTF-8', $encoding);
-                }, $row);
-
-                $data = array_combine($headers, $cleanRow);
-                
-                try {
-                    if ($this->processRow($data)) {
-                        $importedCount++;
-                    } else {
-                        $skippedCount++;
-                    }
-                } catch (\Exception $e) {
-                    $skippedCount++;
-                    $this->command->warn("Row {$rowCount} skipped: " . $e->getMessage());
-                }
-                
-                if ($rowCount % 1000 === 0) {
-                    $this->command->info("Processed {$rowCount} rows...");
-                }
-            }
-            
+            // Insert any remaining items in the batch after all files are processed
             $this->insertQuestionsBatch();
             
-            fclose($handle);
             DB::commit();
             
-            $this->command->info("✓ Import complete: {$importedCount} questions successfully queued, {$skippedCount} skipped from {$rowCount} total rows.");
+            $this->command->info("✓ Import complete for all files.");
             
         } catch (\Exception $e) {
             DB::rollBack();
             $this->command->error("Import failed entirely: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    protected function processFile(string $filePath): void
+    {
+        $this->command->info("Processing: " . basename($filePath));
+        $handle = fopen($filePath, 'r');
+        
+        $headers = fgetcsv($handle);
+        if (!$headers) {
+            throw new \Exception("Failed to read CSV headers in " . basename($filePath));
+        }
+        
+        // Strip BOM from the first header if it exists
+        $headers[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $headers[0]);
+        $headers = array_map('trim', $headers);
+        
+        $rowCount = 0;
+        $importedCount = 0;
+        $skippedCount = 0;
+        
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowCount++;
+            
+            if (empty(array_filter($row))) {
+                continue; 
+            }
+
+            if (count($headers) !== count($row)) {
+                $row = array_pad($row, count($headers), null);
+            }
+
+            // Sanitize all row data to prevent MySQL 1366 encoding errors
+            $cleanRow = array_map(function ($value) {
+                $value = trim((string) $value);
+                if ($value === '') {
+                    return null;
+                }
+                $encoding = mb_detect_encoding($value, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
+                return mb_convert_encoding($value, 'UTF-8', $encoding);
+            }, $row);
+
+            $data = array_combine($headers, $cleanRow);
+            
+            try {
+                if ($this->processRow($data)) {
+                    $importedCount++;
+                } else {
+                    $skippedCount++;
+                }
+            } catch (\Exception $e) {
+                $skippedCount++;
+                $this->command->warn("Row {$rowCount} skipped in " . basename($filePath) . ": " . $e->getMessage());
+            }
+            
+            if ($rowCount % 1000 === 0) {
+                $this->command->info("Processed {$rowCount} rows from " . basename($filePath) . "...");
+            }
+        }
+        
+        fclose($handle);
+        $this->command->info("✓ Finished file: " . basename($filePath) . " ({$importedCount} queued, {$skippedCount} skipped from {$rowCount} total rows).");
     }
 
     protected function processRow(array $data): bool
