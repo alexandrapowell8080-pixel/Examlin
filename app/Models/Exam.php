@@ -3,26 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exam extends Model
 {
-    protected $fillable = [
-        'title', 'slug', 'category_label', 'description', 
-        'is_active', 'order'
-    ];
+    protected $fillable = ['category_id', 'name', 'slug'];
+    public $timestamps = false;
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function subjects(): HasMany
+    public function category(): BelongsTo
     {
-        return $this->hasMany(Subject::class)->orderBy('order');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function scopeActive($query)
+    public function examNames(): HasMany
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(ExamName::class, 'exam_id');
     }
 }

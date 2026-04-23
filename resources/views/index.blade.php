@@ -75,18 +75,18 @@
                                         <div class="graphic-beam"></div>
                                     </div>
                                     <div class="widget-grid">
-                                        <a href="/course/gmat" class="widget-item">GMAT®</a>
-                                        <a href="/course/gre" class="widget-item">GRE®</a>
-                                        <a href="/course/lsat" class="widget-item">LSAT®</a>
-                                        <a href="/course/teas" class="widget-item">TEAS®</a>
-                                        <a href="/course/hesi" class="widget-item">HESI A2®</a>
+                                        <a href="/teas" class="widget-item">TEAS®</a>
+                                        <a href="/ged" class="widget-item">GED®</a>
+                                        <a href="/nex" class="widget-item">NEX®</a>
+                                        <a href="/accuplacer" class="widget-item">ACCUPLACER®</a>
+                                        <a href="/gre" class="widget-item">GRE®</a>
                                     </div>
                                     <div class="widget-grid mt-sm">
-                                        <a href="/course/nex" class="widget-item">NEX®</a>
-                                        <a href="/course/ged" class="widget-item item-active">GED®</a>
-                                        <a href="/course/hiset" class="widget-item">HiSET®</a>
-                                        <a href="/course/accuplacer" class="widget-item">ACCUPLACER®</a>
-                                        <a href="/course/tsia2" class="widget-item">TSIA2®</a>
+                                        <a href="/hesi" class="widget-item">HESI A2®</a>
+                                        <a href="/lsat" class="widget-item item-active">LSAT®</a>
+                                        <a href="/hiset" class="widget-item">HiSET®</a>
+                                        <a href="/tsia2" class="widget-item">TSIA2®</a>
+                                        <a href="/gmat" class="widget-item">GMAT®</a>
                                     </div>
                                 </div>
                                 <p class="widget-footer-text">Click any exam to start practicing instantly</p>
@@ -108,16 +108,16 @@
                     <div class="hero-widget-mobile">
                         <p class="widget-title mb-md">All Practice Exams</p>
                         <div class="mobile-widget-list">
-                            <a href="/course/gmat" class="mobile-widget-item">GMAT®</a>
-                            <a href="/course/gre" class="mobile-widget-item">GRE®</a>
-                            <a href="/course/lsat" class="mobile-widget-item">LSAT®</a>
-                            <a href="/course/teas" class="mobile-widget-item">TEAS®</a>
-                            <a href="/course/hesi" class="mobile-widget-item">HESI A2®</a>
-                            <a href="/course/nex" class="mobile-widget-item">NEX®</a>
-                            <a href="/course/ged" class="mobile-widget-item">GED®</a>
-                            <a href="/course/hiset" class="mobile-widget-item">HiSET®</a>
-                            <a href="/course/accuplacer" class="mobile-widget-item">ACCUPLACER®</a>
-                            <a href="/course/tsia2" class="mobile-widget-item">TSIA2®</a>
+                            <a href="/gmat" class="mobile-widget-item">GMAT®</a>
+                            <a href="/gre" class="mobile-widget-item">GRE®</a>
+                            <a href="/lsat" class="mobile-widget-item">LSAT®</a>
+                            <a href="/teas" class="mobile-widget-item">TEAS®</a>
+                            <a href="/hesi" class="mobile-widget-item">HESI A2®</a>
+                            <a href="/nex" class="mobile-widget-item">NEX®</a>
+                            <a href="/ged" class="mobile-widget-item">GED®</a>
+                            <a href="/hiset" class="mobile-widget-item">HiSET®</a>
+                            <a href="/accuplacer" class="mobile-widget-item">ACCUPLACER®</a>
+                            <a href="/tsia2" class="mobile-widget-item">TSIA2®</a>
                         </div>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
 
                     <div class="course-grids-container">
                         <div class="course-grid-3 active-grid" id="grid-graduate">
-                            <a href="/course/gmat" class="course-card-simple">
+                            <a href="/gmat" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/586e1612a_generated_91c2a338.webp') }}" alt="GMAT®">
                                 </div>
@@ -150,7 +150,7 @@
                                     <div class="card-link">Start Practice <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>
                                 </div>
                             </a>
-                            <a href="/course/gre" class="course-card-simple">
+                            <a href="/gre" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/e0a6e88fb_generated_73ba4d62.webp') }}" alt="GRE®">
                                 </div>
@@ -160,7 +160,7 @@
                                     <div class="card-link">Start Practice <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>
                                 </div>
                             </a>
-                            <a href="/course/lsat" class="course-card-simple">
+                            <a href="/lsat" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/191576a1b_generated_9c2e5bdc.webp') }}" alt="LSAT®">
                                 </div>
@@ -173,7 +173,7 @@
                         </div>
 
                         <div class="course-grid-3 hidden-grid" id="grid-nursing">
-                            <a href="/course/teas" class="course-card-simple">
+                            <a href="/teas" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/549376d8a_generated_55df93d0.webp') }}" alt="TEAS®">
                                 </div>
@@ -183,7 +183,7 @@
                                     <div class="card-link">Start Practice <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>
                                 </div>
                             </a>
-                            <a href="/course/hesi" class="course-card-simple">
+                            <a href="/hesi" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/3427aaba9_generated_c34fa82a.webp') }}" alt="HESI A2®">
                                 </div>
@@ -193,7 +193,7 @@
                                     <div class="card-link">Start Practice <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>
                                 </div>
                             </a>
-                            <a href="/course/nex" class="course-card-simple">
+                            <a href="/nex" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/d3c08301f_generated_2ddfc8f9.webp') }}" alt="NEX®">
                                 </div>
@@ -206,7 +206,7 @@
                         </div>
 
                         <div class="course-grid-3 hidden-grid" id="grid-college">
-                            <a href="/course/accuplacer" class="course-card-simple">
+                            <a href="/accuplacer" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/c9834f674_generated_be062126.webp') }}" alt="ACCUPLACER®">
                                 </div>
@@ -216,7 +216,7 @@
                                     <div class="card-link">Start Practice <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>
                                 </div>
                             </a>
-                            <a href="/course/tsia2" class="course-card-simple">
+                            <a href="/tsia2" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/93dbcfcd1_generated_7e9e6eb1.webp') }}" alt="TSIA2®">
                                 </div>
@@ -229,7 +229,7 @@
                         </div>
 
                         <div class="course-grid-3 hidden-grid" id="grid-hs">
-                            <a href="/course/ged" class="course-card-simple">
+                            <a href="/ged" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/db67b4372_generated_4034987d.webp') }}" alt="GED®">
                                 </div>
@@ -239,7 +239,7 @@
                                     <div class="card-link">Start Practice <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div>
                                 </div>
                             </a>
-                            <a href="/course/hiset" class="course-card-simple">
+                            <a href="/hiset" class="course-card-simple">
                                 <div class="card-img-wrapper">
                                     <img src="{{ asset('images/exams/bfdc73159_generated_d4fd3c8c.webp') }}" alt="HiSET®">
                                 </div>
@@ -324,7 +324,7 @@
                     </div>
 
                     <div class="course-grid-4">
-                        <a href="/course/gmat" class="exam-card">
+                        <a href="/gmat" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-gmat"><span>GMAT</span></div>
                                 <div>
@@ -355,7 +355,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/gre" class="exam-card">
+                        <a href="/gre" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-gre"><span>GRE</span></div>
                                 <div>
@@ -386,7 +386,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/lsat" class="exam-card">
+                        <a href="/lsat" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-lsat"><span>LSAT</span></div>
                                 <div>
@@ -417,7 +417,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/teas" class="exam-card">
+                        <a href="/teas" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-teas"><span>TEAS</span></div>
                                 <div>
@@ -448,7 +448,7 @@
                             </div>
                         </a>
                         
-                        <a href="/course/hesi" class="exam-card">
+                        <a href="/hesi" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-hesi"><span>HESI</span></div>
                                 <div>
@@ -479,7 +479,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/nex" class="exam-card">
+                        <a href="/nex" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-nex"><span>NEX</span></div>
                                 <div>
@@ -510,7 +510,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/accuplacer" class="exam-card">
+                        <a href="/accuplacer" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-acc"><span>ACC</span></div>
                                 <div>
@@ -541,7 +541,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/tsia2" class="exam-card">
+                        <a href="/tsia2" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-tsia"><span>TSIA</span></div>
                                 <div>
@@ -572,7 +572,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/ged" class="exam-card">
+                        <a href="/ged" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-ged"><span>GED</span></div>
                                 <div>
@@ -603,7 +603,7 @@
                             </div>
                         </a>
 
-                        <a href="/course/hiset" class="exam-card">
+                        <a href="/hiset" class="exam-card">
                             <div class="exam-card-header">
                                 <div class="exam-logo bg-hiset"><span>HiSET</span></div>
                                 <div>
