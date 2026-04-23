@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class CSVSeeder extends Seeder
 {
@@ -69,7 +68,6 @@ class CSVSeeder extends Seeder
                     if ($value === '') {
                         return null;
                     }
-                    // Detect encoding and safely convert to UTF-8
                     $encoding = mb_detect_encoding($value, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
                     return mb_convert_encoding($value, 'UTF-8', $encoding);
                 }, $row);
@@ -122,9 +120,9 @@ class CSVSeeder extends Seeder
         }
 
         $classificationId = $this->getOrCreateClassification($classificationName);
-        $categoryId       = $this->getOrCreateCategory($classificationId, $classificationName, $categoryName);
-        $examId           = $this->getOrCreateExam($categoryId, $categoryName, $examName);
-        $examNameId       = $this->getOrCreateExamName($examId, $examName, $examNameName);
+        $categoryId       = $this->getOrCreateCategory($classificationId, $categoryName);
+        $examId           = $this->getOrCreateExam($categoryId, $examName);
+        $examNameId       = $this->getOrCreateExamName($examId, $examNameName);
 
         $this->queueQuestion($examNameId, $data);
         
@@ -156,9 +154,9 @@ class CSVSeeder extends Seeder
         return $id;
     }
 
-    protected function getOrCreateCategory(int $classificationId, string $parentName, string $name): int
+    protected function getOrCreateCategory(int $classificationId, string $name): int
     {
-        $slug = Str::slug($parentName . '-' . $name);
+        $slug = Str::slug($name);
         $cacheKey = "{$classificationId}:{$slug}";
         
         if (isset($this->categoryCache[$cacheKey])) {
@@ -183,9 +181,9 @@ class CSVSeeder extends Seeder
         return $id;
     }
 
-    protected function getOrCreateExam(int $categoryId, string $parentName, string $name): int
+    protected function getOrCreateExam(int $categoryId, string $name): int
     {
-        $slug = Str::slug($parentName . '-' . $name);
+        $slug = Str::slug($name);
         $cacheKey = "{$categoryId}:{$slug}";
         
         if (isset($this->examCache[$cacheKey])) {
@@ -210,9 +208,9 @@ class CSVSeeder extends Seeder
         return $id;
     }
 
-    protected function getOrCreateExamName(int $examId, string $parentName, string $name): int
+    protected function getOrCreateExamName(int $examId, string $name): int
     {
-        $slug = Str::slug($parentName . '-' . $name);
+        $slug = Str::slug($name);
         $cacheKey = "{$examId}:{$slug}";
         
         if (isset($this->examNameCache[$cacheKey])) {
@@ -239,18 +237,15 @@ class CSVSeeder extends Seeder
 
     protected function queueQuestion(int $examNameId, array $data): void
     {
-        $dateAdded = $this->parseDate($data['Date Added'] ?? null);
-        $resourceUrl = $data['Resource URL'] ?? $data['URL'] ?? 'https://examlin.com';
-        $addedBy = $data['Added By'] ?? 'admin';
-        
-        $baseText = substr($data['Question Text'] ?? 'question', 0, 40);
-        $slug = Str::slug($baseText) . '-' . uniqid();
+        $baseText = substr($data['Question Text'] ?? 'question', 0, 50);
+        $cleanSlug = Str::slug($baseText);
+        $uniqueSlug = $cleanSlug . '-' . uniqid();
         
         $this->questionsBatch[] = [
             'exam_name_id'  => $examNameId,
             'extract'       => $data['Extract Text'] ?? null,
             'question'      => $data['Question Text'],
-            'slug'          => $slug,
+            'slug'          => $uniqueSlug,
             'choiceA'       => $data['Choice A'] ?? null,
             'choiceB'       => $data['Choice B'] ?? null,
             'choiceC'       => $data['Choice C'] ?? null,
@@ -263,9 +258,9 @@ class CSVSeeder extends Seeder
             'image'         => $data['Image URL'] ?? null,
             'qtype'         => $data['Question Type'] ?? 'Regular',
             'heading'       => $data['Heading'] ?? null,
-            'resource_url'  => $resourceUrl,
-            'added_by'      => $addedBy,
-            'date_added'    => $dateAdded,
+            'resource_url'  => '/questions/' . $cleanSlug,
+            'added_by'      => 'admin',
+            'date_added'    => now(),
         ];
 
         if (count($this->questionsBatch) >= $this->batchSize) {
@@ -278,19 +273,6 @@ class CSVSeeder extends Seeder
         if (count($this->questionsBatch) > 0) {
             DB::table('questions')->insert($this->questionsBatch);
             $this->questionsBatch = []; 
-        }
-    }
-
-    protected function parseDate(?string $dateString): string
-    {
-        if (empty($dateString)) {
-            return now()->format('Y-m-d H:i:s');
-        }
-        
-        try {
-            return Carbon::parse($dateString)->format('Y-m-d H:i:s');
-        } catch (\Exception $e) {
-            return now()->format('Y-m-d H:i:s');
         }
     }
 }
