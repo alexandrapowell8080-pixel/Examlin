@@ -119,7 +119,7 @@
                                     </div>
 
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px;">
-                                        <span style="font-weight: 500; color: var(--gray);">Question {{ $questionNumber }}</span>
+                                        <span id="question-number-text" style="font-weight: 500; color: var(--gray);">Question {{ $questionNumber }}</span>
                                         <span class="text-muted-foreground">of {{ $questions->count() }}</span>
                                     </div>
                                 </div>
@@ -132,6 +132,9 @@
                                         {{ $currentQuestion->extract }}
                                     </div>
                                 @endif
+
+                                <div style="display: none" class="question-extract_ mb-4 p-4 rounded-xl bg-offwhite border-l-4" style="border-left-color: var(--sage)">
+                                    </div>
                                 
                                 <p class="text-lg md:text-xl font-semibold text-foreground leading-relaxed font-inter" id="question-text">{{ $currentQuestion->question }}</p>
                                 
@@ -140,6 +143,9 @@
                                         <img src="{{ asset('storage/' . $currentQuestion->image) }}" alt="Question illustration" loading="lazy" class="max-w-full h-auto rounded-xl">
                                     </div>
                                 @endif
+                                <div style="display:none" class="question-image mt-4 text-center">
+                                        <img src="{{ asset('storage/' . $currentQuestion->image) }}" alt="Question illustration" loading="lazy" class="max-w-full h-auto rounded-xl">
+                                    </div>
 
                                 <div id="rationale-card" class="mt-6 rounded-xl p-4 flex gap-3 rationale-card" 
                                      style="background-color: rgba(154, 74, 122, 0.07); border: 1.5px solid rgba(154, 74, 122, 0.25); display: {{ $isAnswered ? 'flex' : 'none' }};">
@@ -149,17 +155,9 @@
                                     <div>
                                         <p class="text-[11px] font-bold uppercase tracking-widest font-inter mb-1" style="color: rgb(154, 74, 122);">Rationale</p>
                                         <p class="text-sm leading-relaxed text-foreground font-inter" id="rationale-text">
-                                            @if($currentQuestion->rationale)
-                                                {!! $currentQuestion->rationale !!}
-                                            @else
-                                                The correct answer is {{ $currentQuestion->correctAnswer }}. Review the explanation to understand the concept.
-                                            @endif
+                                                                                 
                                         </p>
-                                        {{-- @if($currentQuestion->resource_url)
-                                            <p class="mt-2 text-xs text-muted-foreground">
-                                                Source: <a href="{{ $currentQuestion->resource_url }}" target="_blank" rel="noopener" style="color: var(--sage)">{{ parse_url($currentQuestion->resource_url, PHP_URL_HOST) }}</a>
-                                            </p>
-                                        @endif --}}
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -182,7 +180,7 @@
                                             $showCorrectState = $isAnswered && $isCorrectChoice;
                                             $showIncorrectState = $isAnswered && $isSelected && !$isCorrectChoice;
                                         @endphp
-                                        <button id="c_{{ $choice['letter'] }}" class="w-full text-left flex items-center gap-3 p-4 rounded-xl border transition-all duration-150 hover:scale-[1.01] hover:border-primary/30 choice-button {{ $showCorrectState ? 'choice-button--correct' : '' }} {{ $showIncorrectState ? 'choice-button--incorrect' : '' }}" 
+                                        <button id="choice_card{{ $choice['letter'] }}" class="w-full text-left flex items-center gap-3 p-4 rounded-xl border transition-all duration-150 hover:scale-[1.01] hover:border-primary/30 choice-button {{ $showCorrectState ? 'choice-button--correct' : '' }} {{ $showIncorrectState ? 'choice-button--incorrect' : '' }}" 
                                                 role="radio" 
                                                 aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
                                                 data-choice="{{ $choice['letter'] }}"
@@ -191,7 +189,7 @@
                                             <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold font-inter choice__letter {{ $showCorrectState ? 'border-green-500 bg-green-500 text-white' : ($showIncorrectState ? 'border-red-400 bg-red-50 text-red-600' : 'border-border text-muted-foreground') }}">
                                                 {{ $choice['letter'] }}
                                             </div>
-                                            <span id="c_t_{{ $choice['letter'] }}" class="text-sm font-medium text-foreground">{{ $choice['text'] }}</span>
+                                            <span class="text-sm font-medium text-foreground " id="choice_text{{ $choice['letter'] }}">{{ $choice['text'] }}</span>
                                         </button>
                                     @endforeach
                                 </div>
@@ -229,9 +227,9 @@
                     </div>
                     
                     
-                    {{-- {{ $answeredCount }} --}}
+                    
                     <div class="mt-4 text-center text-xs text-muted-foreground" id="progress-text">
-                        <span id="total_answered">0</span> of {{ $questions->count() }} answered · {{ $correctCount }} correct
+                        <span id="total_answered">{{ $answeredCount }}</span> of {{ $questions->count() }} answered · {{ $correctCount }} correct
                     </div>
                     <!-- Highest Attempt Badge -->
 <div class="mt-6">
@@ -309,6 +307,8 @@
     @include('partials.footer')
 
     <script>
+        // === GLOBAL STATE VARIABLES ===
+        let total_answered = 0;
         const toggleBtn = document.querySelector('.nav__mobile-toggle');
         const mobileMenu = document.getElementById('mobile-menu');
         
@@ -318,16 +318,18 @@
             mobileMenu.hidden = isExpanded;
         });
 
+        // Initial DOM Elements
         const choicesList = document.getElementById('choices-list');
         const rationaleCard = document.getElementById('rationale-card');
         const nextBtn = document.getElementById('next-btn');
         const prevBtn = document.getElementById('prev-btn');
-        const choiceButtons = document.querySelectorAll('.choice-button');
+        let choiceButtons = document.querySelectorAll('.choice-button');
         
+        // Initial Data Attributes
         let correctAnswer = choicesList?.dataset.correctAnswer;
         let questionId = choicesList?.dataset.questionId;
         let alreadyCounted = choicesList?.dataset.alreadyCounted === 'true';
-        const examNameId = choicesList?.dataset.examNameId;
+        let examNameId = choicesList?.dataset.examNameId;
         const totalQuestions = {{ $questions->count() }};
         const isLastQuestion = {{ $isLastQuestion ? 'true' : 'false' }};
         const csrfToken = '{{ csrf_token() }}';
@@ -335,17 +337,21 @@
         let questionAnswered = {{ $isAnswered ? 'true' : 'false' }};
         let currentAnsweredCount = {{ $answeredCount }};
         let currentCorrectCount = {{ $correctCount }};
-        let total_answered = 0;
-        function selectAnswer(btn) {
+        
+        // === GLOBAL FUNCTION: selectAnswer ===
+        // Defined globally so inline onclick="selectAnswer(this)" always works
+        window.selectAnswer = function(btn) {
             if (questionAnswered) return;
             
             const selectedChoice = btn.dataset.choice;
             const isCorrect = (selectedChoice === correctAnswer);
             
-            choiceButtons.forEach(b => {
+            // Disable all buttons and highlight correct/incorrect
+            document.querySelectorAll('.choice-button').forEach(b => {
                 b.disabled = true;
                 b.style.cursor = 'default';
                 
+                // Highlight Correct Answer
                 if (b.dataset.choice === correctAnswer) {
                     b.classList.add('choice-button--correct');
                     const letterEl = b.querySelector('.choice__letter');
@@ -355,6 +361,7 @@
                     }
                 }
                 
+                // Highlight Incorrect Selection (if user chose wrong)
                 if (b.dataset.choice === selectedChoice && !isCorrect) {
                     b.classList.add('choice-button--incorrect');
                     const letterEl = b.querySelector('.choice__letter');
@@ -365,32 +372,36 @@
                 }
             });
             
-            if (rationaleCard) {
-                rationaleCard.style.display = 'flex';
+            // Show Rationale
+            const ratCard = document.getElementById('rationale-card');
+            if (ratCard) {
+                ratCard.style.display = 'flex';
                 if (window.innerWidth < 1024) {
-                    rationaleCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    ratCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
             
-            if (nextBtn) {
-                nextBtn.disabled = false;
-                nextBtn.classList.remove('opacity-50', 'pointer-events-none');
-                if (nextBtn.tagName === 'A') {
-                    nextBtn.removeAttribute('tabindex');
+            // Enable Next Button
+            const nBtn = document.getElementById('next-btn');
+            if (nBtn) {
+                nBtn.disabled = false;
+                nBtn.classList.remove('opacity-50', 'pointer-events-none');
+                if (nBtn.tagName === 'A') {
+                    nBtn.removeAttribute('tabindex');
                 }
             }
             
+            // Update Progress Counters (Client Side)
             if (!alreadyCounted) {
                 currentAnsweredCount++;
-                if (isCorrect) {
-                    currentCorrectCount++;
-                }
+                if (isCorrect) currentCorrectCount++;
                 
                 const progressEl = document.getElementById('progress-text');
                 if (progressEl) {
                     progressEl.textContent = `${currentAnsweredCount} of ${totalQuestions} answered · ${currentCorrectCount} correct`;
                 }
                 
+                // Send to Server
                 fetch('/quiz/update-progress', {
                     method: 'POST',
                     headers: {
@@ -410,12 +421,14 @@
             
             questionAnswered = true;
             
-            if (isLastQuestion && nextBtn && nextBtn.tagName === 'A') {
-                nextBtn.style.fontWeight = '800';
-                nextBtn.style.textDecoration = 'underline';
+            // Visual hint for last question
+            if (isLastQuestion && nBtn && nBtn.tagName === 'A') {
+                nBtn.style.fontWeight = '800';
+                nBtn.style.textDecoration = 'underline';
             }
-        }
+        };
         
+        // === NAVIGATION: navigateQuestion (HTML Swap) ===
         async function navigateQuestion(direction) {
             if (direction === 'next' && !questionAnswered) {
                 return;
@@ -427,18 +440,24 @@
             const originalContent = btn.innerHTML;
             // btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-current inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Loading...`;
             // btn.disabled = true;
+
+            // added code 
+
+                nextQuestion()
+                return;
+            // ended
             
             try {
                 const formData = new FormData();
                 formData.append('exam_name_id', examNameId);
                 formData.append('direction', direction);
                 formData.append('_token', csrfToken);
-         
+                
                 const response = await fetch('{{ route("quiz.navigate") }}', {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest','X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'text/html'
                     }
                 });
@@ -452,11 +471,19 @@
                     document.getElementById('quiz-container').innerHTML = newContainer.innerHTML;
                     window.history.pushState({}, '', response.url);
                     
+                    // Re-initialize state from new DOM
                     const newChoicesList = document.getElementById('choices-list');
                     if (newChoicesList) {
                         questionAnswered = newChoicesList.dataset.alreadyCounted === 'true';
                         currentAnsweredCount = parseInt(newChoicesList.dataset.answeredCount) || 0;
                         currentCorrectCount = parseInt(newChoicesList.dataset.correctCount) || 0;
+                        correctAnswer = newChoicesList.dataset.correctAnswer;
+                        questionId = newChoicesList.dataset.questionId;
+                        examNameId = newChoicesList.dataset.examNameId;
+                        alreadyCounted = newChoicesList.dataset.alreadyCounted === 'true';
+                        
+                        // Update global reference to buttons
+                        choiceButtons = document.querySelectorAll('.choice-button');
                     }
                     
                     initQuizEvents();
@@ -466,8 +493,7 @@
                         header.scrollIntoView({ behavior: 'smooth' });
                     }
                 } else {
-                    // window.location.href = response.url;
-                    nextQuestion()
+                    window.location.href = response.url;
                 }
             } catch (error) {
                 console.error('Navigation error:', error);
@@ -475,111 +501,40 @@
             }
         }
         
+        // === INITIALIZATION: initQuizEvents ===
         function initQuizEvents() {
-            const newChoicesList = document.getElementById('choices-list');
-            const newRationaleCard = document.getElementById('rationale-card');
             const newNextBtn = document.getElementById('next-btn');
             const newPrevBtn = document.getElementById('prev-btn');
-            const newChoiceButtons = document.querySelectorAll('.choice-button');
             
-            if (newChoicesList) {
-                window.selectAnswer = function(btn) {
-                    if (questionAnswered) return;
-                    
-                    let correctAnswer = newChoicesList.dataset.correctAnswer;
-                    const selectedChoice = btn.dataset.choice;
-                    const isCorrect = (selectedChoice === correctAnswer);
-                    
-                    newChoiceButtons.forEach(b => {
-                        b.disabled = true;
-                        b.style.cursor = 'default';
-                        
-                        if (b.dataset.choice === correctAnswer) {
-                            b.classList.add('choice-button--correct');
-                            const letterEl = b.querySelector('.choice__letter');
-                            if (letterEl) {
-                                letterEl.classList.remove('border-border', 'text-muted-foreground');
-                                letterEl.classList.add('border-green-500', 'bg-green-500', 'text-white');
-                            }
-                        }
-                        
-                        if (b.dataset.choice === selectedChoice && !isCorrect) {
-                            b.classList.add('choice-button--incorrect');
-                            const letterEl = b.querySelector('.choice__letter');
-                            if (letterEl) {
-                                letterEl.classList.remove('border-border', 'text-muted-foreground');
-                                letterEl.classList.add('border-red-400', 'bg-red-50', 'text-red-600');
-                            }
-                        }
-                    });
-                    
-                    if (newRationaleCard) {
-                        newRationaleCard.style.display = 'flex';
-                        if (window.innerWidth < 1024) {
-                            newRationaleCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }
-                    
-                    if (newNextBtn) {
-                        newNextBtn.disabled = false;
-                        newNextBtn.classList.remove('opacity-50', 'pointer-events-none');
-                        if (newNextBtn.tagName === 'A') {
-                            newNextBtn.removeAttribute('tabindex');
-                        }
-                    }
-                    
-                    let alreadyCounted = newChoicesList.dataset.alreadyCounted === 'true';
-                    if (!alreadyCounted) {
-                        currentAnsweredCount++;
-                        if (isCorrect) {
-                            currentCorrectCount++;
-                        }
-                        
-                        const progressEl = document.getElementById('progress-text');
-                        if (progressEl) {
-                            progressEl.textContent = `${currentAnsweredCount} of ${totalQuestions} answered · ${currentCorrectCount} correct`;
-                        }
-                        
-                        const examNameId = newChoicesList.dataset.examNameId;
-                        let questionId = newChoicesList.dataset.questionId;
-                        
-                        fetch('/quiz/update-progress', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken,
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: JSON.stringify({
-                                exam_name_id: examNameId,
-                                question_id: questionId,
-                                is_correct: isCorrect,
-                                answered_count: currentAnsweredCount,
-                                correct_count: currentCorrectCount
-                            })
-                        }).catch(err => console.error('Progress update failed:', err));
-                    }
-                    
-                    questionAnswered = true;
-                };
-            }
-            
+            // Attach Next/Prev handlers
             if (newNextBtn) {
+                // If using HTML swap navigation
                 newNextBtn.onclick = function() { navigateQuestion('next'); };
             }
             if (newPrevBtn) {
                 newPrevBtn.onclick = function() { navigateQuestion('previous'); };
             }
             
+            // Update Progress Bar Visuals
             const progressBar = document.getElementById('progress-bar-fill');
             if (progressBar) {
-                const questionNumberMatch = document.querySelector('[style*="var(--gray)"]')?.textContent.match(/Question (\d+)/);
+                const questionNumberMatch = document.getElementById('question-number-text')?.textContent?.match(/Question (\d+)/);
                 const currNum = questionNumberMatch ? parseInt(questionNumberMatch[1]) : 1;
                 const percentage = totalQuestions > 0 ? Math.min(100, (currNum / totalQuestions) * 100) : 0;
                 progressBar.style.width = percentage + '%';
             }
+            
+            // Ensure Next button state matches answered state
+            if (newNextBtn && !questionAnswered) {
+                newNextBtn.disabled = true;
+                if (newNextBtn.tagName === 'A') {
+                    newNextBtn.classList.add('opacity-50', 'pointer-events-none');
+                    newNextBtn.setAttribute('tabindex', '-1');
+                }
+            }
         }
         
+        // === DOMContentLoaded ===
         document.addEventListener('DOMContentLoaded', function() {
             initQuizEvents();
             
@@ -602,7 +557,8 @@
             window.location.reload();
         });
 
-         function nextQuestion(){
+        // === NEXT QUESTION: JSON Update (Alternative Navigation) ===
+        function nextQuestion(){
             console.log('Fetching next question...', examNameId, questionId);
              fetch('/question-next', {
                             method: 'POST',
@@ -618,25 +574,25 @@
                         })
                         .then(res => res.json())
                         .then(res=>{
-                       
+                            // 1. Update Question Text
                             document.getElementById('question-text').innerText = res.question.question;
-                         
+                            
+                            // 2. Hide Rationale
                             const ratCard = document.getElementById('rationale-card');
                             if(ratCard) ratCard.style.display = 'none';
 
+                            // 3. Reset All Buttons
                             let letters = ['A','B','C','D','E','F','G'];
                             letters.forEach(element => {
-                                let btn = document.getElementById('c_'+element);
-                                let btn_txt = document.getElementById('c_t_'+element); 
+                                let btn = document.getElementById('choice_card'+element);
                                 let textSpan = document.getElementById('choice_text'+element);
-
-                                 
+                                
                                 if (btn) {
-                             
+                                    // Check if this choice exists in new data
                                     let choiceText = res.question['choice' + element];
                                     
                                     if (choiceText) {
-                                    
+                                        // Enable and Reset
                                         btn.disabled = false;
                                         btn.style.cursor = 'pointer';
                                         btn.setAttribute('aria-pressed', 'false');
@@ -653,23 +609,21 @@
                                         if(textSpan) textSpan.innerText = choiceText;
                                         btn.style.display = 'flex';
                                     } else {
-                                  
+                                        // Hide if doesn't exist
                                         btn.disabled = true;
                                         btn.style.display = 'none';
                                     }
-
-                                    btn_txt.innerText = res.question[`choice${element}`];
                                 }
-
-
                             });
 
+                            // 4. Update Progress Bar & Counters
                             total_answered++;
-                            console.log(document.getElementById('total_answered'));
-                          
+                            document.getElementById('total_answered').innerText = total_answered;
+                            
+                            // Update Progress Bar Width
                             const progressBar = document.getElementById('progress-bar-fill');
                             if (progressBar && totalQuestions > 0) {
-                            
+                                // Approximate new question number
                                 const newQNum = ({{ $questionNumber }} + total_answered); 
                                 const pct = Math.min(100, (newQNum / totalQuestions) * 100);
                                 progressBar.style.width = pct + '%';
@@ -678,18 +632,21 @@
                                 if(qText) qText.innerText = `Question ${newQNum}`;
                             }
 
+                            // 5. CRITICAL: Reset State for New Question
                             questionId = res.question.id;
-                            questionAnswered = false; 
-                            alreadyCounted = false;  
-                            correctAnswer = res.question.correctAnswer; 
+                            questionAnswered = false; // ✅ Allows clicking again
+                            alreadyCounted = false;   // ✅ Allows counting progress
+                            correctAnswer = res.question.correctAnswer; // ✅ Update correct answer
                             
+                            // Update data attributes on container
                             const cl = document.getElementById('choices-list');
                             if(cl) {
                                 cl.dataset.questionId = questionId;
                                 cl.dataset.correctAnswer = correctAnswer;
                                 cl.dataset.alreadyCounted = 'false';
                             }
-d
+
+                            // 6. Disable Next Button until answered
                             const nBtn = document.getElementById('next-btn');
                             if(nBtn) {
                                 nBtn.disabled = true;
