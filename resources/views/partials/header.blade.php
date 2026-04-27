@@ -16,7 +16,7 @@
                     </button>
                     
                     <div class="dropdown-content">
-                        <p class="mobile-category-title font-inter">All Courses</p>
+                        <p class="mobile-category-title font-inter">Courses</p>
                         <div class="course-grid-inner">
                             <a href="/gmat" class="course-btn">GMAT®</a>
                             <a href="/gre" class="course-btn">GRE®</a>
