@@ -1030,3 +1030,70 @@ p {
 .animate-spin {
     animation: spin 1s linear infinite;
 }
+/* Related Questions Card Styling */
+.related-question-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.related-question-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.related-question-card:hover::before {
+    opacity: 1;
+}
+
+.related-question-card .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Icon hover effects */
+.related-question-card:hover .lucide-chevron-right {
+    transform: translateX(2px);
+    transition: transform 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .related-question-card {
+        padding: 0.875rem;
+    }
+    
+    .related-question-card .w-8 {
+        width: 1.75rem;
+    }
+    
+    .related-question-card .h-8 {
+        height: 1.75rem;
+    }
+}
+
+/* Focus states for accessibility */
+.related-question-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Smooth hover lift effect */
+.related-question-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Ensure text doesn't wrap awkwardly */
+.related-question-card p {
+    word-wrap: break-word;
+    hyphens: auto;
+}
