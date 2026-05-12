@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\QuestionController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('index');
@@ -16,7 +16,7 @@ Route::get('/questions/{slug}', [QuestionController::class, 'show'])
     ->where('slug', '[a-zA-Z0-9\-_]+')
     ->name('question.show');
 
-Route::post('/api/question-next', [QuestionController::class, 'next'])
+Route::post('/question-next', [QuestionController::class, 'next'])
     ->name('question.next');
 
 Route::get('/{exam_slug}', [ExamController::class, 'category'])
@@ -27,7 +27,7 @@ Route::get('/{exam_slug}/{subject_slug}/{test_slug}', [ExamController::class, 'q
     ->where([
         'exam_slug' => '[a-zA-Z0-9\-_]+',
         'subject_slug' => '[a-zA-Z0-9\-_]+',
-        'test_slug' => '[a-zA-Z0-9\-_]+'
+        'test_slug' => '[a-zA-Z0-9\-_]+',
     ])
     ->name('quiz.show');
 
@@ -41,7 +41,7 @@ Route::get('/{exam_slug}/{subject_slug}/{test_slug}/results', [ExamController::c
     ->where([
         'exam_slug' => '[a-zA-Z0-9\-_]+',
         'subject_slug' => '[a-zA-Z0-9\-_]+',
-        'test_slug' => '[a-zA-Z0-9\-_]+'
+        'test_slug' => '[a-zA-Z0-9\-_]+',
     ])
     ->name('quiz.results');
 
@@ -49,7 +49,7 @@ Route::get('/{exam_slug}/{subject_slug}/{test_slug}/reset', [ExamController::cla
     ->where([
         'exam_slug' => '[a-zA-Z0-9\-_]+',
         'subject_slug' => '[a-zA-Z0-9\-_]+',
-        'test_slug' => '[a-zA-Z0-9\-_]+'
+        'test_slug' => '[a-zA-Z0-9\-_]+',
     ])
     ->name('quiz.reset');
 
