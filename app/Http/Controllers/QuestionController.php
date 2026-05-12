@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Question;
 use App\Models\Exam;
+use App\Models\Question;
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
@@ -34,7 +34,7 @@ class QuestionController extends Controller
         $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
         foreach ($letters as $letter) {
             $text = $question->{"choice{$letter}"};
-            if (!empty(trim($text))) {
+            if (! empty(trim($text))) {
                 $choices[] = [
                     'letter' => $letter,
                     'text' => $text,
@@ -43,8 +43,8 @@ class QuestionController extends Controller
             }
         }
 
-        $pageTitle = ($question->exam_name_id ? 'Practice Question' : 'Question') . ' | Examlin';
-        $pageDesc = strip_tags(substr($question->question, 0, 160)) . '...';
+        $pageTitle = ($question->exam_name_id ? 'Practice Question' : 'Question').' | Examlin';
+        $pageDesc = strip_tags(substr($question->question, 0, 160)).'...';
         $canonical = $question->resource_url ?: route('question.show', $question->slug);
 
         return view('question.index', compact(
@@ -61,36 +61,45 @@ class QuestionController extends Controller
     public function next(Request $request)
     {
         $currentId = $request->input('question_id');
-        
+
+        if (! $currentId) {
+            return response()->json(['error' => 'Missing question_id'], 400);
+        }
+
         $nextQuestion = Question::where('id', '!=', $currentId)
             ->inRandomOrder()
             ->first();
 
-        if (!$nextQuestion) {
+        if (! $nextQuestion) {
             return response()->json(['error' => 'No more questions'], 404);
         }
 
-        $formattedChoices = [];
+        $choices = [];
         $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
         foreach ($letters as $letter) {
             $text = $nextQuestion->{"choice{$letter}"};
-            if (!empty(trim($text))) {
-                $formattedChoices[$letter] = $text;
+            if (! empty(trim($text))) {
+                $choices[] = [
+                    'letter' => $letter,
+                    'text' => $text,
+                    'is_correct' => (strtoupper($letter) === strtoupper($nextQuestion->correctAnswer)),
+                ];
             }
         }
 
         return response()->json([
+            'success' => true,
             'question' => [
                 'id' => $nextQuestion->id,
                 'slug' => $nextQuestion->slug,
                 'resource_url' => $nextQuestion->resource_url,
-                'question' => $nextQuestion->question,
+                'question_text' => $nextQuestion->question,
                 'extract' => $nextQuestion->extract,
                 'image' => $nextQuestion->image,
                 'rationale' => $nextQuestion->rationale,
                 'correctAnswer' => $nextQuestion->correctAnswer,
-                'choices' => $formattedChoices
-            ]
+                'choices' => $choices,
+            ],
         ]);
     }
 }
