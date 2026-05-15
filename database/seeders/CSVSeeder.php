@@ -9,16 +9,19 @@ use Illuminate\Support\Str;
 class CSVSeeder extends Seeder
 {
     protected $directoryPath;
-    
+
     protected $classificationCache = [];
+
     protected $categoryCache = [];
+
     protected $examCache = [];
+
     protected $examNameCache = [];
-    
+
     protected $questionsBatch = [];
-    
+
     // Lowered to 500 to prevent 'MySQL server has gone away' max_allowed_packet errors
-    protected $batchSize = 500; 
+    protected $batchSize = 500;
 
     public function __construct()
     {
@@ -27,53 +30,54 @@ class CSVSeeder extends Seeder
 
     public function run(): void
     {
-        $csvFiles = glob($this->directoryPath . '/*.csv');
+        $csvFiles = glob($this->directoryPath.'/*.csv');
 
         if (empty($csvFiles)) {
             $this->command->error("No CSV files found in: {$this->directoryPath}");
+
             return;
         }
 
-        $this->command->info("Starting stable CSV import for " . count($csvFiles) . " file(s).");
-        
-        DB::disableQueryLog(); 
-        
+        $this->command->info('Starting stable CSV import for '.count($csvFiles).' file(s).');
+
+        DB::disableQueryLog();
+
         // Notice: Global transaction removed here to prevent timeouts
-        
+
         foreach ($csvFiles as $filePath) {
             $this->processFile($filePath);
         }
-        
-        $this->command->info("✓ Import completely finished for all files.");
+
+        $this->command->info('✓ Import completely finished for all files.');
     }
 
     protected function processFile(string $filePath): void
     {
-        $this->command->info("Processing: " . basename($filePath));
-        
+        $this->command->info('Processing: '.basename($filePath));
+
         // Start transaction PER FILE to keep connection fresh and stable
         DB::beginTransaction();
-        
+
         try {
             $handle = fopen($filePath, 'r');
-            
+
             $headers = fgetcsv($handle);
-            if (!$headers) {
-                throw new \Exception("Failed to read CSV headers in " . basename($filePath));
+            if (! $headers) {
+                throw new \Exception('Failed to read CSV headers in '.basename($filePath));
             }
-            
+
             $headers[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $headers[0]);
             $headers = array_map('trim', $headers);
-            
+
             $rowCount = 0;
             $importedCount = 0;
             $skippedCount = 0;
-            
+
             while (($row = fgetcsv($handle)) !== false) {
                 $rowCount++;
-                
+
                 if (empty(array_filter($row))) {
-                    continue; 
+                    continue;
                 }
 
                 if (count($headers) !== count($row)) {
@@ -85,17 +89,18 @@ class CSVSeeder extends Seeder
                     if ($value === '') {
                         return null;
                     }
-                    
+
                     if (mb_check_encoding($value, 'UTF-8')) {
                         return $value;
                     }
-                    
+
                     $encoding = mb_detect_encoding($value, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
+
                     return mb_convert_encoding($value, 'UTF-8', $encoding);
                 }, $row);
 
                 $data = array_combine($headers, $cleanRow);
-                
+
                 try {
                     if ($this->processRow($data)) {
                         $importedCount++;
@@ -104,29 +109,29 @@ class CSVSeeder extends Seeder
                     }
                 } catch (\Exception $e) {
                     $skippedCount++;
-                    $this->command->warn("Row {$rowCount} skipped in " . basename($filePath) . ": " . $e->getMessage());
+                    $this->command->warn("Row {$rowCount} skipped in ".basename($filePath).': '.$e->getMessage());
                 }
-                
+
                 if ($rowCount % 500 === 0) {
-                    $this->command->info("Processed {$rowCount} rows from " . basename($filePath) . "...");
+                    $this->command->info("Processed {$rowCount} rows from ".basename($filePath).'...');
                 }
             }
-            
+
             // Flush any remaining questions in the batch for this specific file
             $this->insertQuestionsBatch();
-            
+
             fclose($handle);
-            
+
             // Commit the transaction for this file
             DB::commit();
-            $this->command->info("✓ Finished file: " . basename($filePath) . " ({$importedCount} queued, {$skippedCount} skipped).");
-            
+            $this->command->info('✓ Finished file: '.basename($filePath)." ({$importedCount} queued, {$skippedCount} skipped).");
+
         } catch (\Exception $e) {
             // Rollback only the current file if it fails, allowing others to continue
             DB::rollBack();
             // Clear the batch so corrupted data doesn't spill into the next file
-            $this->questionsBatch = []; 
-            $this->command->error("Failed processing " . basename($filePath) . ": " . $e->getMessage());
+            $this->questionsBatch = [];
+            $this->command->error('Failed processing '.basename($filePath).': '.$e->getMessage());
         }
     }
 
@@ -137,28 +142,28 @@ class CSVSeeder extends Seeder
         }
 
         $classificationName = $data['classification'] ?? '';
-        $categoryName       = $data['category'] ?? '';
-        $examName           = $data['Exams'] ?? '';
-        $examNameName       = $data['Exam Name'] ?? '';
-        
+        $categoryName = $data['category'] ?? '';
+        $examName = $data['Exams'] ?? '';
+        $examNameName = $data['Exam Name'] ?? '';
+
         if (empty($classificationName) || empty($categoryName) || empty($examName) || empty($examNameName)) {
             return false;
         }
 
         $classificationId = $this->getOrCreateClassification($classificationName);
-        $categoryId       = $this->getOrCreateCategory($classificationId, $categoryName);
-        $examId           = $this->getOrCreateExam($categoryId, $examName);
-        $examNameId       = $this->getOrCreateExamName($examId, $examNameName);
+        $categoryId = $this->getOrCreateCategory($classificationId, $categoryName);
+        $examId = $this->getOrCreateExam($categoryId, $examName);
+        $examNameId = $this->getOrCreateExamName($examId, $examNameName);
 
         $this->queueQuestion($examNameId, $data);
-        
+
         return true;
     }
 
     protected function getOrCreateClassification(string $name): int
     {
         $slug = Str::slug($name);
-        
+
         if (isset($this->classificationCache[$slug])) {
             return $this->classificationCache[$slug];
         }
@@ -167,16 +172,18 @@ class CSVSeeder extends Seeder
 
         if ($record) {
             $this->classificationCache[$slug] = $record->id;
+
             return $record->id;
         }
 
         $id = DB::table('classifications')->insertGetId([
-            'name'       => $name,
-            'slug'       => $slug,
+            'name' => $name,
+            'slug' => $slug,
             'created_at' => now(),
         ]);
 
         $this->classificationCache[$slug] = $id;
+
         return $id;
     }
 
@@ -184,7 +191,7 @@ class CSVSeeder extends Seeder
     {
         $slug = Str::slug($name);
         $cacheKey = "{$classificationId}:{$slug}";
-        
+
         if (isset($this->categoryCache[$cacheKey])) {
             return $this->categoryCache[$cacheKey];
         }
@@ -193,17 +200,19 @@ class CSVSeeder extends Seeder
 
         if ($record) {
             $this->categoryCache[$cacheKey] = $record->id;
+
             return $record->id;
         }
 
         $id = DB::table('categories')->insertGetId([
             'classification_id' => $classificationId,
-            'name'              => $name,
-            'slug'              => $slug,
-            'created_at'        => now(),
+            'name' => $name,
+            'slug' => $slug,
+            'created_at' => now(),
         ]);
 
         $this->categoryCache[$cacheKey] = $id;
+
         return $id;
     }
 
@@ -211,7 +220,7 @@ class CSVSeeder extends Seeder
     {
         $slug = Str::slug($name);
         $cacheKey = "{$categoryId}:{$slug}";
-        
+
         if (isset($this->examCache[$cacheKey])) {
             return $this->examCache[$cacheKey];
         }
@@ -220,17 +229,19 @@ class CSVSeeder extends Seeder
 
         if ($record) {
             $this->examCache[$cacheKey] = $record->id;
+
             return $record->id;
         }
 
         $id = DB::table('exams')->insertGetId([
             'category_id' => $categoryId,
-            'name'        => $name,
-            'slug'        => $slug,
-            'created_at'  => now(),
+            'name' => $name,
+            'slug' => $slug,
+            'created_at' => now(),
         ]);
 
         $this->examCache[$cacheKey] = $id;
+
         return $id;
     }
 
@@ -238,7 +249,7 @@ class CSVSeeder extends Seeder
     {
         $slug = Str::slug($name);
         $cacheKey = "{$examId}:{$slug}";
-        
+
         if (isset($this->examNameCache[$cacheKey])) {
             return $this->examNameCache[$cacheKey];
         }
@@ -247,17 +258,19 @@ class CSVSeeder extends Seeder
 
         if ($record) {
             $this->examNameCache[$cacheKey] = $record->id;
+
             return $record->id;
         }
 
         $id = DB::table('exam_names')->insertGetId([
-            'exam_id'    => $examId,
-            'name'       => $name,
-            'slug'       => $slug,
+            'exam_id' => $examId,
+            'name' => $name,
+            'slug' => $slug,
             'created_at' => now(),
         ]);
 
         $this->examNameCache[$cacheKey] = $id;
+
         return $id;
     }
 
@@ -265,28 +278,28 @@ class CSVSeeder extends Seeder
     {
         $baseText = substr($data['Question Text'] ?? 'question', 0, 50);
         $cleanSlug = Str::slug($baseText);
-        $uniqueSlug = $cleanSlug . '-' . uniqid();
-        
+        $uniqueSlug = $cleanSlug.'-'.uniqid();
+
         $this->questionsBatch[] = [
-            'exam_name_id'  => $examNameId,
-            'extract'       => $data['Extract Text'] ?? null,
-            'question'      => $data['Question Text'],
-            'slug'          => $uniqueSlug,
-            'choiceA'       => $data['Choice A'] ?? null,
-            'choiceB'       => $data['Choice B'] ?? null,
-            'choiceC'       => $data['Choice C'] ?? null,
-            'choiceD'       => $data['Choice D'] ?? null,
-            'choiceE'       => $data['Choice E'] ?? null,
-            'choiceF'       => $data['Choice F'] ?? null,
-            'choiceG'       => $data['Choice G'] ?? null,
+            'exam_name_id' => $examNameId,
+            'extract' => $data['Extract Text'] ?? null,
+            'question' => $data['Question Text'],
+            'slug' => $uniqueSlug,
+            'choiceA' => $data['Choice A'] ?? null,
+            'choiceB' => $data['Choice B'] ?? null,
+            'choiceC' => $data['Choice C'] ?? null,
+            'choiceD' => $data['Choice D'] ?? null,
+            'choiceE' => $data['Choice E'] ?? null,
+            'choiceF' => $data['Choice F'] ?? null,
+            'choiceG' => $data['Choice G'] ?? null,
             'correctAnswer' => $data['Correct Answer'] ?? '',
-            'rationale'     => $data['Rationale'] ?? null,
-            'image'         => $data['Image URL'] ?? null,
-            'qtype'         => $data['Question Type'] ?? 'Regular',
-            'heading'       => $data['Heading'] ?? null,
-            'resource_url'  => '/questions/' . $cleanSlug,
-            'added_by'      => 'admin',
-            'date_added'    => now(),
+            'rationale' => $data['Rationale'] ?? null,
+            'image' => $data['Image URL'] ?? null,
+            'qtype' => $data['Question Type'] ?? 'Regular',
+            'heading' => $data['Heading'] ?? null,
+            'resource_url' => '/questions/'.$cleanSlug,
+            'added_by' => 'admin',
+            'date_added' => now(),
         ];
 
         if (count($this->questionsBatch) >= $this->batchSize) {
@@ -298,7 +311,7 @@ class CSVSeeder extends Seeder
     {
         if (count($this->questionsBatch) > 0) {
             DB::table('questions')->insert($this->questionsBatch);
-            $this->questionsBatch = []; 
+            $this->questionsBatch = [];
         }
     }
 }
